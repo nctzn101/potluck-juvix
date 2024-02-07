@@ -1,0 +1,74 @@
+module Solve;
+
+import Stdlib.Prelude open;
+import Stdlib.Data.List.Base;
+
+type Request :=
+  mkRequest {
+    id : String;
+    status : String;
+    resource : List String; 
+    qty : Nat;
+  };
+
+type Donation := 
+  mkDonation {
+    id : String;
+    requestId : String;
+    resource : List String;
+    qty : Nat;
+  };
+
+type Solution := 
+  mkSolution {
+  requestId : String;
+  donations : List Donation;
+};
+
+
+req1 : Request := mkRequest (id := "1"; status := "open"; resource := "book" :: "sci-fi" :: nil; qty := 15);
+req2 : Request := mkRequest (id := "2"; status := "closed"; resource := "suitcase" :: nil; qty := 1);
+
+don1 : Donation := mkDonation (id := "1"; requestId := "1"; resource := "book" :: "sci-fi" :: nil; qty := 1);
+don2 : Donation := mkDonation (id := "2"; requestId := "1"; resource := "book" :: "sci-fi" :: nil; qty := 8);
+don3 : Donation := mkDonation (id := "3"; requestId := "1"; resource := "book" :: "sci-fi" :: nil; qty := 3);
+don4 : Donation := mkDonation (id := "4"; requestId := "1"; resource := "book" :: "sci-fi" :: nil; qty := 5);
+don5 : Donation := mkDonation (id := "5"; requestId := "2"; resource := "suitcase" :: "carryon" :: nil; qty := 1);
+
+
+requestPool : List Request := req1 :: req2 :: nil;
+donationPool : List Donation := don1 :: don2 :: don3 :: don4 :: don5 :: nil;
+
+requestId (r : Request) : String := Request.id r;
+requestStatus (r : Request) : String := Request.status r;
+donationRequestId (d : Donation) : String := Donation.requestId d;
+getSolution (s : Solution) : List Donation := Solution.donations s;
+
+
+requestValid (r : Request) : Bool := if (requestStatus r == "open") true false;
+
+getCandidateDonations (r : Request) (donations : List Donation) : List Donation :=
+  if (requestValid r) (for (result := nil) (donation in donations) if (Request.id r == Donation.requestId donation) (donation :: result) result) nil;
+
+d : Donation := mkDonation (id := "none"; requestId := "none"; resource := nil; qty := 0);
+
+getMaxDon (d : Donation) (donations : List Donation) : Donation := 
+  for (d := d) (donation in donations) if (Donation.qty donation > Donation.qty d) donation d; 
+ 
+removeFromDonationList (d : Donation) (donations : List Donation) : List Donation := 
+  for (ds := nil) (donation in donations) if (Donation.id d /= Donation.id donation) (donation :: ds) ds;
+
+getSumDonations (donations : List Donation) : Nat := 
+  for (q := 0) (donation in donations) Donation.qty donation + q;
+
+solve (r : Request) (donations : List Donation) : List Donation := 
+  for (sol := nil) (don in (getCandidateDonations r donations)) if 
+  (getSumDonations (getCandidateDonations r donations) < Request.qty r) nil 
+  (if (getSumDonations sol >= Request.qty r) sol (don :: sol));
+
+getSumSolution (s : Solution) : Nat := 
+  for (q := 0) (donation in Solution.donations s) Donation.qty donation + q;
+
+sol1 : Solution := mkSolution (requestId := "req1"; donations := solve req1 donationPool);
+sol2 : Solution := mkSolution (requestId := "req2"; donations := solve req2 donationPool);
+
